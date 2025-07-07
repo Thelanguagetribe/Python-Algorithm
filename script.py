@@ -6,7 +6,7 @@ Author: Afreen
 Date: 07/07/2025
 """
 
-definitely main():
+def main():
 print("Hello, world!")
 
 if_name_=="_main_":
