@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}The Language Tribe - Connect, Learn, Grow{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1>🌍 Connect with Native Speakers</h1>
+        <p class="lead">Learn languages naturally through authentic conversations with verified native speakers from around the world.</p>
+        <div class="mt-4">
+            <a href="{{ url_for('learners') }}" class="btn btn-light btn-lg me-3">
+                <i class="fas fa-graduation-cap"></i> Find Learners
+            </a>
+            <a href="{{ url_for('speakers') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-chalkboard-teacher"></i> Browse Teachers
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ stats.total_speakers }}</div>
+                    <div class="stats-label">Native Speakers</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ stats.languages_available }}</div>
+                    <div class="stats-label">Languages Available</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ "%.1f"|format(stats.avg_rating) }}</div>
+                    <div class="stats-label">Average Rating</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">100%</div>
+                    <div class="stats-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">How It Works</h2>
+            <p class="lead text-muted">Our intelligent matching algorithm connects you with the perfect language partner</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-search fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Smart Matching</h5>
+                        <p class="card-text">Our algorithm considers language preferences, location, age compatibility, schedule availability, and budget to find your perfect match.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-map-marker-alt fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Flexible Learning</h5>
+                        <p class="card-text">Choose between in-person lessons in your area or online sessions. Our proximity-based matching ensures convenient local connections.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-check fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Schedule Sync</h5>
+                        <p class="card-text">Our system automatically finds overlapping time slots between learners and teachers, making scheduling effortless.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Languages Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Available Languages</h2>
+            <p class="lead text-muted">Learn from native speakers of these languages</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            {% for language, count in stats.languages.items() %}
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            {% if language == 'Spanish' %}🇪🇸
+                            {% elif language == 'French' %}🇫🇷
+                            {% elif language == 'German' %}🇩🇪
+                            {% elif language == 'Italian' %}🇮🇹
+                            {% elif language == 'Japanese' %}🇯🇵
+                            {% else %}🌍
+                            {% endif %}
+                            {{ language }}
+                        </h5>
+                        <p class="card-text">
+                            <span class="badge badge-custom">{{ count }} teacher{{ 's' if count != 1 else '' }}</span>
+                        </p>
+                        <a href="{{ url_for('speakers') }}?language={{ language }}" class="btn btn-outline-primary btn-sm">
+                            Find Teachers
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="display-6 fw-bold mb-3">Ready to Start Learning?</h2>
+        <p class="lead mb-4">Join thousands of language learners who have found their perfect native speaker match</p>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-white text-dark">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-graduation-cap text-primary"></i>
+                                    For Learners
+                                </h5>
+                                <p class="card-text">Find native speakers to practice with</p>
+                                <a href="{{ url_for('learners') }}" class="btn btn-primary">Browse Learners</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-white text-dark">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-chalkboard-teacher text-primary"></i>
+                                    For Teachers
+                                </h5>
+                                <p class="card-text">Share your language and culture</p>
+                                <a href="{{ url_for('speakers') }}" class="btn btn-primary">Browse Teachers</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Demo Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">See It In Action</h2>
+            <p class="lead text-muted">Explore our matching system with real data</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h5><i class="fas fa-chart-bar"></i> System Dashboard</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p>View comprehensive analytics, matching statistics, and system performance metrics.</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-chart-bar"></i> View Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
