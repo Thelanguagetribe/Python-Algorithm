@@ -1,0 +1,628 @@
+{% extends "base.html" %}
+
+{% block title %}Book Lesson with {{ speaker.name }} - The Language Tribe{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .booking-step {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        border-left: 5px solid var(--primary-color);
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin: 1rem 0;
+    }
+    
+    .calendar-day {
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .calendar-day:hover {
+        background: var(--light-gray);
+    }
+    
+    .calendar-day.selected {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .calendar-day.disabled {
+        background: #f5f5f5;
+        color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .time-slot {
+        padding: 0.75rem 1rem;
+        margin: 0.5rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-block;
+        min-width: 100px;
+        text-align: center;
+    }
+    
+    .time-slot:hover {
+        border-color: var(--primary-color);
+        background: var(--light-gray);
+    }
+    
+    .time-slot.selected {
+        border-color: var(--primary-color);
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .time-slot.unavailable {
+        background: #f5f5f5;
+        color: #ccc;
+        cursor: not-allowed;
+        border-color: #e5e7eb;
+    }
+    
+    .lesson-duration {
+        display: flex;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .duration-option {
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        flex: 1;
+        transition: all 0.3s ease;
+    }
+    
+    .duration-option:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .duration-option.selected {
+        border-color: var(--primary-color);
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .booking-summary {
+        background: var(--light-gray);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+    }
+    
+    .payment-section {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+    }
+    
+    .stripe-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        margin: 1rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="booking-container">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-calendar-plus text-primary"></i>
+                Book a Lesson
+            </h1>
+            <p class="lead text-muted">Schedule your lesson with {{ speaker.name }}</p>
+        </div>
+
+        <!-- Teacher Info -->
+        <div class="booking-step">
+            <div class="step-number">1</div>
+            <h4>Your Teacher</h4>
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5>{{ speaker.name }}</h5>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-language"></i> Native {{ speaker.native_language }} Speaker
+                    </p>
+                    <div class="rating-stars mb-2">
+                        {% for i in range(5) %}
+                            {% if i < speaker.rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ms-1">{{ speaker.rating }}/5.0</span>
+                    </div>
+                    <p class="small text-muted">{{ speaker.bio[:100] }}...</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="text-success fw-bold fs-4">
+                        £{{ speaker.hourly_rate }}/hour
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Selection -->
+        <div class="booking-step">
+            <div class="step-number">2</div>
+            <h4>Select Date</h4>
+            <div id="calendar-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn btn-outline-primary" onclick="previousMonth()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h5 id="current-month"></h5>
+                    <button class="btn btn-outline-primary" onclick="nextMonth()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Calendar will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Selection -->
+        <div class="booking-step">
+            <div class="step-number">3</div>
+            <h4>Select Time</h4>
+            <div id="available-times">
+                <p class="text-muted">Please select a date first</p>
+            </div>
+        </div>
+
+        <!-- Duration Selection -->
+        <div class="booking-step">
+            <div class="step-number">4</div>
+            <h4>Lesson Duration</h4>
+            <div class="lesson-duration">
+                <div class="duration-option" data-duration="30">
+                    <strong>30 minutes</strong><br>
+                    <small>£{{ (speaker.hourly_rate * 0.5)|round(2) }}</small>
+                </div>
+                <div class="duration-option selected" data-duration="60">
+                    <strong>1 hour</strong><br>
+                    <small>£{{ speaker.hourly_rate }}</small>
+                </div>
+                <div class="duration-option" data-duration="90">
+                    <strong>1.5 hours</strong><br>
+                    <small>£{{ (speaker.hourly_rate * 1.5)|round(2) }}</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lesson Details -->
+        <div class="booking-step">
+            <div class="step-number">5</div>
+            <h4>Lesson Details</h4>
+            <div class="mb-3">
+                <label for="lesson-topic" class="form-label">Lesson Topic (Optional)</label>
+                <input type="text" class="form-control" id="lesson-topic" 
+                       placeholder="e.g., Conversation practice, Grammar review">
+            </div>
+            <div class="mb-3">
+                <label for="lesson-notes" class="form-label">Notes for Teacher (Optional)</label>
+                <textarea class="form-control" id="lesson-notes" rows="3" 
+                          placeholder="Any specific requests or goals for this lesson"></textarea>
+            </div>
+        </div>
+
+        <!-- Booking Summary -->
+        <div class="booking-step">
+            <div class="step-number">6</div>
+            <h4>Booking Summary</h4>
+            <div class="booking-summary">
+                <div class="row">
+                    <div class="col-6"><strong>Teacher:</strong></div>
+                    <div class="col-6">{{ speaker.name }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Date:</strong></div>
+                    <div class="col-6" id="summary-date">Please select date and time</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Duration:</strong></div>
+                    <div class="col-6" id="summary-duration">1 hour</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Total Cost:</strong></div>
+                    <div class="col-6 text-success fw-bold" id="summary-cost">£{{ speaker.hourly_rate }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="booking-step">
+            <div class="step-number">7</div>
+            <h4>Payment</h4>
+            <div class="payment-section">
+                <p class="mb-3">
+                    <i class="fas fa-lock text-success"></i>
+                    Secure payment powered by Stripe
+                </p>
+                
+                <div class="stripe-card">
+                    <div id="card-element">
+                        <!-- Stripe Elements will create form elements here -->
+                    </div>
+                    <div id="card-errors" role="alert" class="text-danger mt-2"></div>
+                </div>
+                
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="terms-checkbox">
+                    <label class="form-check-label" for="terms-checkbox">
+                        I agree to the <a href="#" class="text-primary">Terms of Service</a> and 
+                        <a href="#" class="text-primary">Cancellation Policy</a>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Button -->
+        <div class="text-center">
+            <button id="book-lesson-btn" class="btn btn-primary btn-lg px-5" disabled>
+                <i class="fas fa-credit-card"></i>
+                Book Lesson & Pay
+            </button>
+            <p class="small text-muted mt-2">
+                You can cancel up to 24 hours before the lesson for a full refund
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle text-success"></i>
+                    Lesson Booked Successfully!
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <p>Your lesson with {{ speaker.name }} has been confirmed!</p>
+                <p class="text-muted">You'll receive a confirmation email with lesson details.</p>
+            </div>
+            <div class="modal-footer">
+                <a href="{{ url_for('learner_bookings', learner_id=learner.id) }}" class="btn btn-primary">
+                    View My Bookings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    // Initialize variables
+    let selectedDate = null;
+    let selectedTime = null;
+    let selectedDuration = 60; // Default 1 hour
+    let currentMonth = new Date();
+    
+    // Stripe setup
+    const stripe = Stripe('pk_test_your_publishable_key_here');
+    const elements = stripe.elements();
+    const cardElement = elements.create('card');
+    cardElement.mount('#card-element');
+    
+    // Calendar functions
+    function initializeCalendar() {
+        updateCalendarDisplay();
+    }
+    
+    function updateCalendarDisplay() {
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        
+        document.getElementById('current-month').textContent = 
+            monthNames[currentMonth.getMonth()] + ' ' + currentMonth.getFullYear();
+        
+        generateCalendarDays();
+    }
+    
+    function generateCalendarDays() {
+        const calendarGrid = document.getElementById('calendar-grid');
+        calendarGrid.innerHTML = '';
+        
+        const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+        const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+        const today = new Date();
+        
+        // Add day headers
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayHeaders.forEach(day => {
+            const header = document.createElement('div');
+            header.textContent = day;
+            header.style.fontWeight = 'bold';
+            header.style.padding = '0.5rem';
+            header.style.textAlign = 'center';
+            calendarGrid.appendChild(header);
+        });
+        
+        // Add empty cells for days before month starts
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            const emptyDay = document.createElement('div');
+            calendarGrid.appendChild(emptyDay);
+        }
+        
+        // Add days of the month
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            dayElement.textContent = day;
+            
+            const dayDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+            
+            // Disable past dates
+            if (dayDate < today) {
+                dayElement.classList.add('disabled');
+            } else {
+                dayElement.onclick = () => selectDate(dayDate);
+            }
+            
+            calendarGrid.appendChild(dayElement);
+        }
+    }
+    
+    function previousMonth() {
+        currentMonth.setMonth(currentMonth.getMonth() - 1);
+        updateCalendarDisplay();
+    }
+    
+    function nextMonth() {
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
+        updateCalendarDisplay();
+    }
+    
+    function selectDate(date) {
+        selectedDate = date;
+        
+        // Update selected date styling
+        document.querySelectorAll('.calendar-day').forEach(day => {
+            day.classList.remove('selected');
+        });
+        event.target.classList.add('selected');
+        
+        // Load available times for selected date
+        loadAvailableTimes(date);
+        updateBookingSummary();
+    }
+    
+    function loadAvailableTimes(date) {
+        const dateFrom = date.toISOString();
+        const dateTo = new Date(date.getTime() + 24 * 60 * 60 * 1000).toISOString();
+        
+        fetch(`/api/available-slots/{{ speaker.id }}?date_from=${dateFrom}&date_to=${dateTo}`)
+            .then(response => response.json())
+            .then(data => {
+                displayAvailableTimes(data.slots || []);
+            })
+            .catch(error => {
+                console.error('Error loading available times:', error);
+                displayAvailableTimes([]);
+            });
+    }
+    
+    function displayAvailableTimes(slots) {
+        const container = document.getElementById('available-times');
+        
+        if (slots.length === 0) {
+            container.innerHTML = '<p class="text-muted">No available times for this date</p>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        slots.forEach(slot => {
+            const timeElement = document.createElement('div');
+            timeElement.className = 'time-slot';
+            
+            const startTime = new Date(slot.start_time);
+            timeElement.textContent = startTime.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            timeElement.onclick = () => selectTime(slot);
+            container.appendChild(timeElement);
+        });
+    }
+    
+    function selectTime(slot) {
+        selectedTime = slot;
+        
+        // Update selected time styling
+        document.querySelectorAll('.time-slot').forEach(time => {
+            time.classList.remove('selected');
+        });
+        event.target.classList.add('selected');
+        
+        updateBookingSummary();
+        updateBookButtonState();
+    }
+    
+    // Duration selection
+    document.querySelectorAll('.duration-option').forEach(option => {
+        option.onclick = function() {
+            document.querySelectorAll('.duration-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            this.classList.add('selected');
+            selectedDuration = parseInt(this.dataset.duration);
+            updateBookingSummary();
+        };
+    });
+    
+    function updateBookingSummary() {
+        if (selectedDate && selectedTime) {
+            const dateStr = selectedDate.toLocaleDateString('en-GB', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const timeStr = new Date(selectedTime.start_time).toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            document.getElementById('summary-date').textContent = `${dateStr} at ${timeStr}`;
+        }
+        
+        const durationText = selectedDuration === 30 ? '30 minutes' : 
+                           selectedDuration === 60 ? '1 hour' : '1.5 hours';
+        document.getElementById('summary-duration').textContent = durationText;
+        
+        const cost = ({{ speaker.hourly_rate }} * selectedDuration / 60).toFixed(2);
+        document.getElementById('summary-cost').textContent = `£${cost}`;
+    }
+    
+    function updateBookButtonState() {
+        const bookBtn = document.getElementById('book-lesson-btn');
+        const termsChecked = document.getElementById('terms-checkbox').checked;
+        
+        if (selectedDate && selectedTime && termsChecked) {
+            bookBtn.disabled = false;
+        } else {
+            bookBtn.disabled = true;
+        }
+    }
+    
+    // Terms checkbox
+    document.getElementById('terms-checkbox').onchange = updateBookButtonState;
+    
+    // Book lesson function
+    document.getElementById('book-lesson-btn').onclick = function() {
+        if (!selectedDate || !selectedTime) {
+            alert('Please select a date and time');
+            return;
+        }
+        
+        bookLesson();
+    };
+    
+    async function bookLesson() {
+        const bookBtn = document.getElementById('book-lesson-btn');
+        bookBtn.disabled = true;
+        bookBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        try {
+            // Create booking
+            const lessonDateTime = new Date(selectedTime.start_time);
+            const bookingData = {
+                learner_id: {{ learner.id }},
+                speaker_id: {{ speaker.id }},
+                lesson_date: lessonDateTime.toISOString(),
+                duration_minutes: selectedDuration,
+                topic: document.getElementById('lesson-topic').value,
+                notes: document.getElementById('lesson-notes').value
+            };
+            
+            const bookingResponse = await fetch('/api/create-booking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bookingData)
+            });
+            
+            const bookingResult = await bookingResponse.json();
+            
+            if (!bookingResult.success) {
+                throw new Error(bookingResult.error);
+            }
+            
+            // Process payment
+            const {error, paymentMethod} = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+            });
+            
+            if (error) {
+                throw new Error(error.message);
+            }
+            
+            const paymentResponse = await fetch('/api/process-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    booking_id: bookingResult.booking_id,
+                    payment_method_id: paymentMethod.id
+                })
+            });
+            
+            const paymentResult = await paymentResponse.json();
+            
+            if (!paymentResult.success) {
+                throw new Error(paymentResult.error);
+            }
+            
+            // Show success modal
+            const modal = new bootstrap.Modal(document.getElementById('successModal'));
+            modal.show();
+            
+        } catch (error) {
+            alert('Error booking lesson: ' + error.message);
+            bookBtn.disabled = false;
+            bookBtn.innerHTML = '<i class="fas fa-credit-card"></i> Book Lesson & Pay';
+        }
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCalendar();
+        updateBookingSummary();
+    });
+</script>
+{% endblock %}
