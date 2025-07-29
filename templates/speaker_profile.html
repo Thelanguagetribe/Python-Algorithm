@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ speaker.name }} - Teacher Profile{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h2>{{ speaker.name }}</h2>
+                    <p class="mb-2">
+                        <i class="fas fa-language"></i>
+                        Native {{ speaker.native_language }} Speaker
+                    </p>
+                    <div class="rating-stars">
+                        {% for i in range(5) %}
+                            {% if i < speaker.rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ms-1">{{ speaker.rating }}/5.0</span>
+                    </div>
+                    {% if speaker.is_verified %}
+                        <span class="badge bg-success mt-2">
+                            <i class="fas fa-check-circle"></i> Verified Teacher
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">LOCATION</h6>
+                            <p>
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                {{ speaker.location.city if speaker.location else 'Online Only' }}, 
+                                {{ speaker.location.country if speaker.location else 'Worldwide' }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">HOURLY RATE</h6>
+                            <p class="text-success fw-bold fs-5">
+                                <i class="fas fa-pound-sign"></i>{{ speaker.hourly_rate }}/hour
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">TEACHING EXPERIENCE</h6>
+                            <p>{{ speaker.teaching_experience_years }} years</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">AVAILABILITY</h6>
+                            <p class="text-success">
+                                <i class="fas fa-users"></i>
+                                {{ speaker.max_students - speaker.current_students }} of {{ speaker.max_students }} spots available
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if speaker.secondary_languages %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted mb-2">ALSO SPEAKS</h6>
+                        {% for lang in speaker.secondary_languages %}
+                            <span class="badge bg-secondary me-1">{{ lang }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted mb-2">LESSON TYPES OFFERED</h6>
+                        {% for lesson_type in speaker.lesson_types_offered %}
+                            <span class="badge bg-primary me-1">
+                                {% if lesson_type.value == 'in_person' %}
+                                    <i class="fas fa-users"></i> In-Person
+                                {% elif lesson_type.value == 'online' %}
+                                    <i class="fas fa-laptop"></i> Online
+                                {% else %}
+                                    <i class="fas fa-expand-arrows-alt"></i> Both Options
+                                {% endif %}
+                            </span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted mb-2">AVAILABLE SCHEDULE</h6>
+                        <div>
+                            {% for availability in speaker.availability %}
+                                <span class="availability-tag">
+                                    {{ availability.day.value.title() }} 
+                                    {{ availability.time_slot.value.title() }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted mb-2">ABOUT {{ speaker.name.split()[0].upper() }}</h6>
+                        <p class="text-muted">{{ speaker.bio }}</p>
+                    </div>
+
+                    <div class="text-center">
+                        <button class="btn btn-primary btn-lg me-3" onclick="contactTeacher({{ speaker.id }}, '{{ speaker.name }}')">
+                            <i class="fas fa-envelope"></i> Contact {{ speaker.name.split()[0] }}
+                        </button>
+                        <a href="{{ url_for('speakers') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-arrow-left"></i> Back to Teachers
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contact {{ speaker.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Message sent to {{ speaker.name }}!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got it!</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function contactTeacher(teacherId, teacherName) {
+        const modal = new bootstrap.Modal(document.getElementById('contactModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

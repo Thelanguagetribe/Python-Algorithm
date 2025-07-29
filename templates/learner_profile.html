@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ learner.name }} - Learner Profile{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2>{{ learner.name }}</h2>
+                    <p class="mb-2">
+                        <i class="fas fa-graduation-cap"></i>
+                        Learning {{ learner.target_language }}
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-language"></i>
+                        Native {{ learner.native_language }} speaker
+                    </p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">LOCATION</h6>
+                            <p>
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                {{ learner.location.city if learner.location else 'Online Preferred' }}, 
+                                {{ learner.location.country if learner.location else 'Worldwide' }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">BUDGET</h6>
+                            <p class="text-success fw-bold fs-5">
+                                <i class="fas fa-pound-sign"></i>{{ learner.budget_per_hour }}/hour
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">AGE</h6>
+                            <p>{{ learner.age }} years old</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-2">EXPERIENCE LEVEL</h6>
+                            <span class="badge 
+                                {% if learner.experience_level == 'beginner' %}bg-info
+                                {% elif learner.experience_level == 'intermediate' %}bg-warning
+                                {% else %}bg-success
+                                {% endif %} fs-6">
+                                {{ learner.experience_level.title() }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted mb-2">LESSON PREFERENCE</h6>
+                        <span class="badge bg-primary fs-6">
+                            {% if learner.lesson_type_preference.value == 'in_person' %}
+                                <i class="fas fa-users"></i> In-Person Only
+                            {% elif learner.lesson_type_preference.value == 'online' %}
+                                <i class="fas fa-laptop"></i> Online Only
+                            {% else %}
+                                <i class="fas fa-expand-arrows-alt"></i> Flexible (Both)
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted mb-2">PREFERRED SCHEDULE</h6>
+                        <div>
+                            {% for availability in learner.availability %}
+                                <span class="availability-tag">
+                                    {{ availability.day.value.title() }} 
+                                    {{ availability.time_slot.value.title() }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted mb-2">MEMBER SINCE</h6>
+                        <p class="text-muted">{{ learner.created_at.strftime('%B %Y') }}</p>
+                    </div>
+
+                    <div class="text-center">
+                        <a href="{{ url_for('find_matches', learner_id=learner.id) }}" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-search"></i> Find Matches for {{ learner.name.split()[0] }}
+                        </a>
+                        <a href="{{ url_for('learners') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-arrow-left"></i> Back to Learners
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
