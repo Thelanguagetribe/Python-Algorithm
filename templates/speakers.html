@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Native Speaker Teachers - The Language Tribe{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold">
+                <i class="fas fa-chalkboard-teacher text-primary"></i>
+                Native Speaker Teachers
+            </h1>
+            <p class="lead text-muted">Learn from verified native speakers around the world</p>
+        </div>
+    </div>
+
+    {% if speakers %}
+        <div class="row">
+            {% for speaker in speakers %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <h4>{{ speaker.name }}</h4>
+                        <p class="mb-1">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ speaker.location.city if speaker.location else 'Online' }}, 
+                            {{ speaker.location.country if speaker.location else 'Worldwide' }}
+                        </p>
+                        <div class="rating-stars">
+                            {% for i in range(5) %}
+                                {% if i < speaker.rating %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <span class="ms-1">{{ speaker.rating }}/5</span>
+                        </div>
+                        {% if speaker.is_verified %}
+                            <span class="badge bg-success mt-2">
+                                <i class="fas fa-check-circle"></i> Verified
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">NATIVE LANGUAGE</h6>
+                            <span class="badge-custom">
+                                <i class="fas fa-language"></i>
+                                {{ speaker.native_language }}
+                            </span>
+                        </div>
+                        
+                        {% if speaker.secondary_languages %}
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">ALSO SPEAKS</h6>
+                            {% for lang in speaker.secondary_languages %}
+                                <span class="badge bg-secondary">{{ lang }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">EXPERIENCE</h6>
+                            <span class="fw-bold">{{ speaker.teaching_experience_years }} years</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">LESSON TYPES</h6>
+                            {% for lesson_type in speaker.lesson_types_offered %}
+                                <span class="badge bg-primary">
+                                    {% if lesson_type.value == 'in_person' %}
+                                        <i class="fas fa-users"></i> In-Person
+                                    {% elif lesson_type.value == 'online' %}
+                                        <i class="fas fa-laptop"></i> Online
+                                    {% else %}
+                                        <i class="fas fa-expand-arrows-alt"></i> Both
+                                    {% endif %}
+                                </span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">RATE</h6>
+                            <span class="text-success fw-bold fs-5">
+                                <i class="fas fa-pound-sign"></i>{{ speaker.hourly_rate }}/hour
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">AVAILABILITY</h6>
+                            <span class="text-success">
+                                <i class="fas fa-users"></i>
+                                {{ speaker.max_students - speaker.current_students }} spots available
+                            </span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-muted mb-2">SCHEDULE</h6>
+                            <div>
+                                {% for availability in speaker.availability %}
+                                    <span class="availability-tag">
+                                        {{ availability.day.value.title() }} 
+                                        {{ availability.time_slot.value.title() }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-muted mb-2">ABOUT</h6>
+                            <p class="small text-muted">{{ speaker.bio[:100] }}{% if speaker.bio|length > 100 %}...{% endif %}</p>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" onclick="contactTeacher({{ speaker.id }}, '{{ speaker.name }}')">
+                                <i class="fas fa-envelope"></i> Contact {{ speaker.name.split()[0] }}
+                            </button>
+                            <a href="{{ url_for('speaker_profile', speaker_id=speaker.id) }}" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-eye"></i> View Full Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Teachers Statistics -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie"></i> Teacher Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <div class="stats-number">{{ speakers|length }}</div>
+                                    <div class="stats-label">Total Teachers</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <div class="stats-number">
+                                        {{ (speakers|sum(attribute='rating') / speakers|length)|round(1) if speakers else 0 }}
+                                    </div>
+                                    <div class="stats-label">Average Rating</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <div class="stats-number">
+                                        {{ (speakers|sum(attribute='teaching_experience_years') / speakers|length)|round(1) if speakers else 0 }}
+                                    </div>
+                                    <div class="stats-label">Avg Experience (years)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <div class="stats-number">
+                                        {{ speakers|selectattr('is_verified')|list|length }}
+                                    </div>
+                                    <div class="stats-label">Verified Teachers</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-chalkboard-teacher fa-5x text-muted mb-3"></i>
+                        <h3 class="text-muted">No Teachers Found</h3>
+                        <p class="text-muted">There are currently no native speaker teachers in the system.</p>
+                        <p class="text-muted">
+                            <small>
+                                <i class="fas fa-info-circle"></i>
+                                Try running the main.py script to populate the database with sample data.
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-envelope text-primary"></i>
+                    Contact Teacher
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Your message has been sent to <strong id="contactTeacherName"></strong>!</p>
+                <p class="text-muted">They'll receive a notification and can respond directly to your email.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    <i class="fas fa-check"></i> Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function contactTeacher(teacherId, teacherName) {
+        // In a real app, this would send an API request
+        document.getElementById('contactTeacherName').textContent = teacherName;
+        
+        // Show success modal
+        const modal = new bootstrap.Modal(document.getElementById('contactModal'));
+        modal.show();
+    }
+
+    // Add interactive effects
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.profile-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

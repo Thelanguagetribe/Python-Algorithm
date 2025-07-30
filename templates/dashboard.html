@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - The Language Tribe{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold">
+                <i class="fas fa-chart-bar text-primary"></i>
+                System Dashboard
+            </h1>
+            <p class="lead text-muted">Analytics and insights for The Language Tribe platform</p>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ data.total_speakers }}</div>
+                <div class="stats-label">Native Speakers</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ data.total_learners }}</div>
+                <div class="stats-label">Language Learners</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ data.languages|length }}</div>
+                <div class="stats-label">Languages Available</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">
+                    {{ ((data.speakers|sum(attribute='rating') / data.speakers|length) if data.speakers else 0)|round(1) }}
+                </div>
+                <div class="stats-label">Avg Teacher Rating</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-5">
+        <!-- Languages Chart -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-language"></i> Languages Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="languagesChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lesson Types Chart -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-laptop"></i> Lesson Type Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="lessonTypesChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Experience and Pricing Row -->
+    <div class="row mb-5">
+        <!-- Experience Chart -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-graduation-cap"></i> Teaching Experience Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="experienceChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Distribution -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-pound-sign"></i> Hourly Rate Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="stats-card">
+                                <div class="stats-number">
+                                    £{{ (data.speakers|min(attribute='hourly_rate')).hourly_rate if data.speakers else 0 }}
+                                </div>
+                                <div class="stats-label">Lowest Rate</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stats-card">
+                                <div class="stats-number">
+                                    £{{ (data.speakers|max(attribute='hourly_rate')).hourly_rate if data.speakers else 0 }}
+                                </div>
+                                <div class="stats-label">Highest Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row text-center mt-3">
+                        <div class="col-12">
+                            <div class="stats-card">
+                                <div class="stats-number">
+                                    £{{ ((data.speakers|sum(attribute='hourly_rate') / data.speakers|length) if data.speakers else 0)|round(1) }}
+                                </div>
+                                <div class="stats-label">Average Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Platform Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">Top Rated Teachers</h6>
+                            {% for speaker in data.speakers|sort(attribute='rating', reverse=true)[:5] %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>{{ speaker.name }}</strong>
+                                    <small class="text-muted">({{ speaker.native_language }})</small>
+                                </div>
+                                <div class="rating-stars">
+                                    {% for i in range(5) %}
+                                        {% if i < speaker.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="ms-1">{{ speaker.rating }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">Most Experienced Teachers</h6>
+                            {% for speaker in data.speakers|sort(attribute='teaching_experience_years', reverse=true)[:5] %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>{{ speaker.name }}</strong>
+                                    <small class="text-muted">({{ speaker.native_language }})</small>
+                                </div>
+                                <span class="badge bg-primary">{{ speaker.teaching_experience_years }} years</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tools"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('learners') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-graduation-cap"></i><br>
+                                View All Learners
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('speakers') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-chalkboard-teacher"></i><br>
+                                View All Teachers
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-success w-100" onclick="refreshData()">
+                                <i class="fas fa-sync-alt"></i><br>
+                                Refresh Data
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-info w-100" onclick="exportData()">
+                                <i class="fas fa-download"></i><br>
+                                Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Languages Distribution Chart
+    const languagesCtx = document.getElementById('languagesChart').getContext('2d');
+    const languagesData = {
+        labels: [{% for lang, count in data.languages.items() %}'{{ lang }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for lang, count in data.languages.items() %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                '#4f46e5', '#7c3aed', '#06b6d4', '#10b981', '#f59e0b',
+                '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'
+            ],
+            borderWidth: 0
+        }]
+    };
+    
+    new Chart(languagesCtx, {
+        type: 'doughnut',
+        data: languagesData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Lesson Types Chart
+    const lessonTypesCtx = document.getElementById('lessonTypesChart').getContext('2d');
+    const lessonTypesData = {
+        labels: ['In-Person', 'Online', 'Both'],
+        datasets: [{
+            data: [
+                {{ data.lesson_types.in_person }},
+                {{ data.lesson_types.online }},
+                {{ data.lesson_types.both }}
+            ],
+            backgroundColor: ['#10b981', '#4f46e5', '#7c3aed'],
+            borderWidth: 0
+        }]
+    };
+    
+    new Chart(lessonTypesCtx, {
+        type: 'pie',
+        data: lessonTypesData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Experience Distribution Chart
+    const experienceCtx = document.getElementById('experienceChart').getContext('2d');
+    const experienceData = {
+        labels: ['0-2 years', '3-5 years', '6-10 years', '10+ years'],
+        datasets: [{
+            label: 'Number of Teachers',
+            data: [
+                {{ data.experience_ranges['0-2'] }},
+                {{ data.experience_ranges['3-5'] }},
+                {{ data.experience_ranges['6-10'] }},
+                {{ data.experience_ranges['10+'] }}
+            ],
+            backgroundColor: '#4f46e5',
+            borderColor: '#4f46e5',
+            borderWidth: 2
+        }]
+    };
+    
+    new Chart(experienceCtx, {
+        type: 'bar',
+        data: experienceData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Quick Actions
+    function refreshData() {
+        // Show loading spinner
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        document.body.appendChild(spinner);
+        
+        // Simulate refresh (in real app, this would be an API call)
+        setTimeout(() => {
+            document.body.removeChild(spinner);
+            location.reload();
+        }, 1000);
+    }
+
+    function exportData() {
+        // In a real app, this would trigger a data export
+        alert('Data export functionality would be implemented here!');
+    }
+
+    // Add fade-in animation to cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

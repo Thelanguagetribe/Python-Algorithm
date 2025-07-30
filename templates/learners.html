@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Language Learners - The Language Tribe{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold">
+                <i class="fas fa-graduation-cap text-primary"></i>
+                Language Learners
+            </h1>
+            <p class="lead text-muted">Discover passionate language learners looking for native speaker partners</p>
+        </div>
+    </div>
+
+    {% if learners %}
+        <div class="row">
+            {% for learner in learners %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h4>{{ learner.name }}</h4>
+                        <p class="mb-1">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ learner.location.city if learner.location else 'Online' }}, 
+                            {{ learner.location.country if learner.location else 'Worldwide' }}
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-birthday-cake"></i>
+                            {{ learner.age }} years old
+                        </p>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">LEARNING</h6>
+                            <span class="badge-custom">
+                                <i class="fas fa-language"></i>
+                                {{ learner.target_language }}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">NATIVE LANGUAGE</h6>
+                            <span class="badge bg-secondary">{{ learner.native_language }}</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">EXPERIENCE LEVEL</h6>
+                            <span class="badge 
+                                {% if learner.experience_level == 'beginner' %}bg-info
+                                {% elif learner.experience_level == 'intermediate' %}bg-warning
+                                {% else %}bg-success
+                                {% endif %}">
+                                {{ learner.experience_level.title() }}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">LESSON PREFERENCE</h6>
+                            <span class="badge bg-primary">
+                                {% if learner.lesson_type_preference.value == 'in_person' %}
+                                    <i class="fas fa-users"></i> In-Person
+                                {% elif learner.lesson_type_preference.value == 'online' %}
+                                    <i class="fas fa-laptop"></i> Online
+                                {% else %}
+                                    <i class="fas fa-expand-arrows-alt"></i> Both
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-muted mb-2">BUDGET</h6>
+                            <span class="text-success fw-bold">
+                                <i class="fas fa-pound-sign"></i>{{ learner.budget_per_hour }}/hour
+                            </span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-muted mb-2">AVAILABILITY</h6>
+                            <div>
+                                {% for availability in learner.availability %}
+                                    <span class="availability-tag">
+                                        {{ availability.day.value.title() }} 
+                                        {{ availability.time_slot.value.title() }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('find_matches', learner_id=learner.id) }}" 
+                               class="btn btn-primary">
+                                <i class="fas fa-search"></i> Find Matches
+                            </a>
+                            <a href="{{ url_for('learner_profile', learner_id=learner.id) }}" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-eye"></i> View Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Summary Statistics -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie"></i> Learner Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <div class="stats-number">{{ learners|length }}</div>
+                                    <div class="stats-label">Total Learners</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <div class="stats-number">
+                                        {{ learners|selectattr('target_language')|list|unique|length }}
+                                    </div>
+                                    <div class="stats-label">Languages Sought</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <div class="stats-number">
+                                        {{ (learners|sum(attribute='budget_per_hour') / learners|length)|round(1) if learners else 0 }}
+                                    </div>
+                                    <div class="stats-label">Avg Budget (£/hr)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <div class="stats-number">
+                                        {{ (learners|sum(attribute='age') / learners|length)|round(0)|int if learners else 0 }}
+                                    </div>
+                                    <div class="stats-label">Average Age</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-graduation-cap fa-5x text-muted mb-3"></i>
+                        <h3 class="text-muted">No Learners Found</h3>
+                        <p class="text-muted">There are currently no language learners in the system.</p>
+                        <p class="text-muted">
+                            <small>
+                                <i class="fas fa-info-circle"></i>
+                                Try running the main.py script to populate the database with sample data.
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add some interactive effects
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add hover effects to profile cards
+        const cards = document.querySelectorAll('.profile-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}
